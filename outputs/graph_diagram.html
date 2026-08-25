@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LangGraph Support-Ticket Agent — Flow Diagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: #0f1422;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #0d121f;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      color: white;
+      font-size: 18px;
+    }
+
+    .title h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .title p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #334155;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #3b82f6;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      align-items: center;
+      background: radial-gradient(circle at 50% 20%, #131b2e 0%, #07090e 80%);
+    }
+
+    .canvas-wrapper {
+      width: 100%;
+      max-width: 1400px;
+      background: #080c14;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo">LG</div>
+      <div class="title">
+        <h1>LangGraph Architecture Visualizer</h1>
+        <p>Chuẩn quy trình 11 Nodes • 4 Quyết định rẽ nhánh • Tuyến đường độc lập</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a href="graph_diagram.svg" download="graph_diagram.svg" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download SVG
+      </a>
+      <a href="/ui/index.html" class="btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 6 4-6 4Z"/></svg>
+        Open Live UI
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div class="canvas-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1780 1680" width="100%" height="100%" style="background: #07090e; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="25%" r="75%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="60%" stop-color="#07090e" />
+      <stop offset="100%" stop-color="#030508" />
+    </radialGradient>
+
+    <!-- Card Shadow & Glow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.7" />
+    </filter>
+    <filter id="diamondShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+
+    <!-- Edge Markers -->
+    <marker id="m-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+    </marker>
+    <marker id="m-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+    </marker>
+    <marker id="m-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+    </marker>
+    <marker id="m-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171" />
+    </marker>
+    <marker id="m-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fbbf24" />
+    </marker>
+
+    <!-- Node Color Accents -->
+    <linearGradient id="g-cyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#0891b2"/></linearGradient>
+    <linearGradient id="g-purple" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#7e22ce"/></linearGradient>
+    <linearGradient id="g-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
+    <linearGradient id="g-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f472b6"/><stop offset="100%" stop-color="#be185d"/></linearGradient>
+    <linearGradient id="g-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#c2410c"/></linearGradient>
+    <linearGradient id="g-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#b91c1c"/></linearGradient>
+    <linearGradient id="g-amber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#b45309"/></linearGradient>
+    <linearGradient id="g-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#047857"/></linearGradient>
+    <linearGradient id="g-slate" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#475569"/></linearGradient>
+    <linearGradient id="g-teal" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0f766e"/></linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="100%" height="100%" fill="url(#bgGlow)" />
+
+  <!-- Grid Pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.75" opacity="0.3"/>
+  </pattern>
+  <rect width="100%" height="100%" fill="url(#grid)" />
+
+  <!-- Header Banner -->
+  <g transform="translate(60, 40)">
+    <text x="0" y="24" fill="#ffffff" font-size="22" font-weight="800" letter-spacing="0.3">LangGraph Multi-Route Agent Workflow</text>
+    <text x="0" y="46" fill="#94a3b8" font-size="13">Kiến trúc 11 Nodes • 4 Khối Rẽ Nhánh • Tuyến Đường Độc Lập Không Đè Nét</text>
+  </g>
+
+  <!-- Legend Box (Top Right) -->
+  <g transform="translate(1260, 30)" filter="url(#shadow)">
+    <rect width="460" height="70" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.2" opacity="0.95"/>
+    <text x="14" y="20" fill="#cbd5e1" font-size="10" font-weight="800" letter-spacing="0.8">QUY ƯỚC ĐƯỜNG ĐI (EDGES)</text>
+    <line x1="14" y1="44" x2="40" y2="44" stroke="#64748b" stroke-width="2.5" marker-end="url(#m-gray)"/>
+    <text x="46" y="48" fill="#94a3b8" font-size="11">Cố định</text>
+    <line x1="115" y1="44" x2="141" y2="44" stroke="#10b981" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#m-green)"/>
+    <text x="147" y="48" fill="#34d399" font-size="11">Thành công</text>
+    <line x1="240" y1="44" x2="266" y2="44" stroke="#f87171" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#m-red)"/>
+    <text x="272" y="48" fill="#f87171" font-size="11">Rủi ro / HITL</text>
+    <line x1="365" y1="44" x2="391" y2="44" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#m-amber)"/>
+    <text x="397" y="48" fill="#fbbf24" font-size="11">Retry Loop</text>
+  </g>
+
+  <!-- ==================== NON-OVERLAPPING EDGES ==================== -->
+  <g fill="none" stroke-width="2.5">
+    
+    <!-- 1. START -> INTAKE -->
+    <path d="M 890 125 L 890 160" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 2. INTAKE -> CLASSIFY -->
+    <path d="M 890 230 L 890 265" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 3. CLASSIFY -> ROUTE_AFTER_CLASSIFY -->
+    <path d="M 890 335 L 890 365" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 4. ROUTE_AFTER_CLASSIFY ➔ 5 DEDICATED LANES -->
+
+    <!-- Lane 1: "simple" (Outermost Left Lane X = 130) -->
+    <path d="M 770 405 L 130 405 L 130 990 L 170 990" stroke="#10b981" stroke-dasharray="6,4" marker-end="url(#m-green)"/>
+    <rect x="145" y="490" width="125" height="26" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1.5"/>
+    <text x="207" y="507" fill="#a7f3d0" font-size="11" font-weight="700" text-anchor="middle">▼ "simple"</text>
+
+    <!-- Lane 2: "missing_info" (Dedicated Lane X = 480) -->
+    <path d="M 810 435 L 480 435 L 480 540" stroke="#eab308" stroke-dasharray="6,4" marker-end="url(#m-amber)"/>
+    <rect x="410" y="470" width="140" height="26" rx="6" fill="#78350f" stroke="#d97706" stroke-width="1.5"/>
+    <text x="480" y="487" fill="#fef08a" font-size="11" font-weight="700" text-anchor="middle">▼ "missing_info"</text>
+
+    <!-- Lane 3: "tool" (Center Lane X = 890) -->
+    <path d="M 890 445 L 890 495" stroke="#38bdf8" stroke-dasharray="6,4" marker-end="url(#m-blue)"/>
+    <rect x="845" y="455" width="90" height="24" rx="6" fill="#0c4a6e" stroke="#0284c7" stroke-width="1.5"/>
+    <text x="890" y="471" fill="#bae6fd" font-size="11" font-weight="700" text-anchor="middle">▼ "tool"</text>
+
+    <!-- Lane 4: "risky" (Dedicated Lane X = 1300) -->
+    <path d="M 970 435 L 1300 435 L 1300 495" stroke="#f87171" stroke-dasharray="6,4" marker-end="url(#m-red)"/>
+    <rect x="1245" y="455" width="110" height="24" rx="6" fill="#7f1d1d" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="1300" y="471" fill="#fecaca" font-size="11" font-weight="700" text-anchor="middle">▼ "risky"</text>
+
+    <!-- Lane 5: "error" (Outermost Right Lane X = 1650) -->
+    <path d="M 1010 405 L 1650 405 L 1650 830 L 1340 830" stroke="#fbbf24" stroke-dasharray="6,4" marker-end="url(#m-amber)"/>
+    <rect x="1595" y="490" width="110" height="26" rx="6" fill="#78350f" stroke="#d97706" stroke-width="1.5"/>
+    <text x="1650" y="507" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">▼ "error"</text>
+
+    <!-- 5. RISKY ACTION ➔ APPROVAL -->
+    <path d="M 1300 565 L 1300 605" stroke="#f87171" marker-end="url(#m-red)"/>
+
+    <!-- 6. APPROVAL ➔ ROUTE_AFTER_APPROVAL -->
+    <path d="M 1300 675 L 1300 705" stroke="#f87171" marker-end="url(#m-red)"/>
+
+    <!-- 7. ROUTE_AFTER_APPROVAL ➔ 2 BRANCHES -->
+    <!-- approved = True -> đi về tool_node (Clean Upper Lane Y = 530) -->
+    <path d="M 1185 745 L 1070 745 L 1070 530 L 1015 530" stroke="#10b981" stroke-dasharray="6,4" marker-end="url(#m-green)"/>
+    <rect x="1080" y="650" width="140" height="26" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1.5"/>
+    <text x="1150" y="667" fill="#a7f3d0" font-size="11" font-weight="700" text-anchor="middle">✓ approved = True</text>
+
+    <!-- approved = False -> đi về clarify_node (Clean Bypass Lane Y = 780) -->
+    <path d="M 1300 785 L 1300 805 L 610 805 L 610 610" stroke="#f87171" stroke-dasharray="6,4" marker-end="url(#m-red)"/>
+    <rect x="730" y="792" width="145" height="26" rx="6" fill="#7f1d1d" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="802" y="809" fill="#fecaca" font-size="11" font-weight="700" text-anchor="middle">✗ approved = False</text>
+
+    <!-- 8. TOOL ➔ EVALUATE -->
+    <path d="M 890 565 L 890 605" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 9. EVALUATE ➔ ROUTE_AFTER_EVALUATE -->
+    <path d="M 890 675 L 890 705" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 10. ROUTE_AFTER_EVALUATE ➔ 2 BRANCHES -->
+    <!-- "success" -> đi về answer_node (Clean Lane X = 320) -->
+    <path d="M 775 745 L 320 745 L 320 955" stroke="#10b981" stroke-dasharray="6,4" marker-end="url(#m-green)"/>
+    <rect x="340" y="830" width="115" height="26" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1.5"/>
+    <text x="397" y="847" fill="#a7f3d0" font-size="11" font-weight="700" text-anchor="middle">✓ "success"</text>
+
+    <!-- "needs_retry" -> Node 8 retry_or_fallback (Clean Lane X = 1200) -->
+    <path d="M 1005 745 L 1220 745 L 1220 795" stroke="#fbbf24" stroke-dasharray="6,4" marker-end="url(#m-amber)"/>
+    <rect x="1035" y="732" width="130" height="26" rx="6" fill="#78350f" stroke="#d97706" stroke-width="1.5"/>
+    <text x="1100" y="749" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">⚠ "needs_retry"</text>
+
+    <!-- 11. RETRY ➔ ROUTE_AFTER_RETRY -->
+    <path d="M 1220 865 L 1220 895" stroke="#fbbf24" marker-end="url(#m-amber)"/>
+
+    <!-- 12. ROUTE_AFTER_RETRY ➔ 2 BRANCHES -->
+    <!-- attempt < max -> quay lại tool_node (Clean Loop Lane X = 730) -->
+    <path d="M 1105 935 L 730 935 L 730 530 L 765 530" stroke="#fbbf24" stroke-dasharray="6,4" marker-end="url(#m-amber)"/>
+    <rect x="800" y="922" width="140" height="26" rx="6" fill="#78350f" stroke="#d97706" stroke-width="1.5"/>
+    <text x="870" y="939" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">↻ attempt &lt; max</text>
+
+    <!-- attempt >= max -> Node 9 dead_letter_node (Straight Down) -->
+    <path d="M 1220 975 L 1220 1025" stroke="#94a3b8" stroke-dasharray="6,4" marker-end="url(#m-gray)"/>
+    <rect x="1235" y="985" width="145" height="26" rx="6" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+    <text x="1307" y="1002" fill="#cbd5e1" font-size="11" font-weight="700" text-anchor="middle">✖ attempt &gt;= max</text>
+
+    <!-- ==================== HỘI TỤ VỀ FINALIZE (COLLECTOR BUS BAR Y = 1200) ==================== -->
+    
+    <!-- 1. From answer_node (X = 300) to Bus Bar -->
+    <path d="M 300 1035 L 300 1200" stroke="#64748b"/>
+
+    <!-- 2. From clarify_node (X = 480) to Bus Bar -->
+    <path d="M 480 610 L 480 1200" stroke="#64748b"/>
+
+    <!-- 3. From dead_letter_node (X = 1220) to Bus Bar -->
+    <path d="M 1220 1095 L 1220 1200" stroke="#64748b"/>
+
+    <!-- 4. Bus Bar Horizontal Bridge & Drop into finalize_node -->
+    <path d="M 300 1200 L 1220 1200" stroke="#64748b"/>
+    <path d="M 890 1200 L 890 1255" stroke="#64748b" marker-end="url(#m-gray)"/>
+
+    <!-- 14. FINALIZE ➔ END -->
+    <path d="M 890 1345 L 890 1395" stroke="#64748b" marker-end="url(#m-gray)"/>
+  </g>
+
+  <!-- ==================== NODES & DECISION DIAMONDS ==================== -->
+
+  <!-- START -->
+  <g transform="translate(820, 70)" filter="url(#shadow)">
+    <rect width="140" height="55" rx="27" fill="#064e3b" stroke="#10b981" stroke-width="2.5" />
+    <text x="70" y="34" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="1.5">START</text>
+  </g>
+
+  <!-- Node 1: intake_node -->
+  <g transform="translate(770, 160)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#0f172a" stroke="#06b6d4" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-cyan)" />
+    <text x="24" y="26" fill="#38bdf8" font-size="11" font-weight="800" letter-spacing="0.8">NODE 1 • GATEWAY</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">intake_node</text>
+  </g>
+
+  <!-- Node 2: classify_node -->
+  <g transform="translate(760, 265)" filter="url(#shadow)">
+    <rect width="260" height="70" rx="12" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="2.5" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-purple)" />
+    <text x="24" y="26" fill="#c084fc" font-size="11" font-weight="800" letter-spacing="0.8">NODE 2 • LLM ROUTER</text>
+    <text x="24" y="50" fill="#ffffff" font-size="18" font-weight="800">classify_node</text>
+  </g>
+
+  <!-- DECISION 1: route_after_classify -->
+  <g transform="translate(770, 365)" filter="url(#diamondShadow)">
+    <polygon points="120,0 240,40 120,80 0,40" fill="#17153a" stroke="#a855f7" stroke-width="2.5" />
+    <text x="120" y="45" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">route_after_classify</text>
+  </g>
+
+  <!-- Node 6: clarify_node (Col 2) -->
+  <g transform="translate(360, 540)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#1c1917" stroke="#eab308" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-amber)" />
+    <text x="24" y="26" fill="#fde047" font-size="11" font-weight="800">NODE 6 • CLARIFY</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">clarify_node</text>
+  </g>
+
+  <!-- Node 7: risky_action (Col 4) -->
+  <g transform="translate(1180, 495)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#20110b" stroke="#f97316" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-orange)" />
+    <text x="24" y="26" fill="#fb923c" font-size="11" font-weight="800">NODE 7 • SAFETY</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">risky_action_node</text>
+  </g>
+
+  <!-- approval_node (HITL Checkpoint) -->
+  <g transform="translate(1180, 605)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#2d0f12" stroke="#ef4444" stroke-width="2.5" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-red)" />
+    <text x="24" y="26" fill="#f87171" font-size="11" font-weight="800">HITL CHECKPOINT</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="800">approval_node</text>
+  </g>
+
+  <!-- DECISION 2: route_after_approval -->
+  <g transform="translate(1185, 705)" filter="url(#diamondShadow)">
+    <polygon points="115,0 230,40 115,80 0,40" fill="#2a1014" stroke="#ef4444" stroke-width="2.5" />
+    <text x="115" y="45" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">route_after_approval</text>
+  </g>
+
+  <!-- Node 3: tool_node (Col 3) -->
+  <g transform="translate(770, 495)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-blue)" />
+    <text x="24" y="26" fill="#60a5fa" font-size="11" font-weight="800">NODE 3 • ACTION</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">tool_node</text>
+  </g>
+
+  <!-- Node 4: evaluate_node -->
+  <g transform="translate(770, 605)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#1f1224" stroke="#ec4899" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-pink)" />
+    <text x="24" y="26" fill="#f472b6" font-size="11" font-weight="800">NODE 4 • CRITIC GATE</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">evaluate_node</text>
+  </g>
+
+  <!-- DECISION 3: route_after_evaluate -->
+  <g transform="translate(775, 705)" filter="url(#diamondShadow)">
+    <polygon points="115,0 230,40 115,80 0,40" fill="#241021" stroke="#ec4899" stroke-width="2.5" />
+    <text x="115" y="45" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">route_after_evaluate</text>
+  </g>
+
+  <!-- Node 8: retry_or_fallback -->
+  <g transform="translate(1100, 795)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#221808" stroke="#f59e0b" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-amber)" />
+    <text x="24" y="26" fill="#fbbf24" font-size="11" font-weight="800">NODE 8 • HEALING</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">retry_or_fallback</text>
+  </g>
+
+  <!-- DECISION 4: route_after_retry -->
+  <g transform="translate(1105, 895)" filter="url(#diamondShadow)">
+    <polygon points="115,0 230,40 115,80 0,40" fill="#271b07" stroke="#f59e0b" stroke-width="2.5" />
+    <text x="115" y="45" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">route_after_retry</text>
+  </g>
+
+  <!-- Node 9: dead_letter_node -->
+  <g transform="translate(1100, 1025)" filter="url(#shadow)">
+    <rect width="240" height="70" rx="12" fill="#1e293b" stroke="#64748b" stroke-width="2" />
+    <rect x="0" y="0" width="8" height="70" rx="4" fill="url(#g-slate)" />
+    <text x="24" y="26" fill="#94a3b8" font-size="11" font-weight="800">NODE 9 • FALLBACK</text>
+    <text x="24" y="50" fill="#ffffff" font-size="17" font-weight="700">dead_letter_node</text>
+  </g>
+
+  <!-- Node 5: answer_node -->
+  <g transform="translate(170, 955)" filter="url(#shadow)">
+    <rect width="260" height="80" rx="14" fill="#062d24" stroke="#10b981" stroke-width="2.5" />
+    <rect x="0" y="0" width="8" height="80" rx="4" fill="url(#g-green)" />
+    <text x="24" y="26" fill="#34d399" font-size="11" font-weight="800">NODE 5 • LLM SYNTHESIS</text>
+    <text x="24" y="52" fill="#ffffff" font-size="18" font-weight="800">answer_node</text>
+    <text x="24" y="70" fill="#a7f3d0" font-size="11">Grounded Final Output</text>
+  </g>
+
+  <!-- Node 11: finalize_node (Mọi nhánh hội tụ) -->
+  <g transform="translate(610, 1255)" filter="url(#shadow)">
+    <rect width="560" height="90" rx="14" fill="#042f2e" stroke="#14b8a6" stroke-width="3" />
+    <rect x="0" y="0" width="10" height="90" rx="5" fill="url(#g-teal)" />
+    <text x="28" y="30" fill="#2dd4bf" font-size="12" font-weight="800" letter-spacing="1">NODE 11 • HỘI TỤ BẮT BUỘC (TERMINUS)</text>
+    <text x="28" y="58" fill="#ffffff" font-size="22" font-weight="800">finalize_node</text>
+    <text x="28" y="78" fill="#99f6e4" font-size="13">[Chốt Audit Trail &amp; Telemetry Checkpoint]</text>
+  </g>
+
+  <!-- END -->
+  <g transform="translate(820, 1395)" filter="url(#shadow)">
+    <rect width="140" height="55" rx="27" fill="#312e81" stroke="#818cf8" stroke-width="2.5" />
+    <text x="70" y="34" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="1.5">END</text>
+  </g>
+</svg>
+
+    </div>
+  </main>
+
+</body>
+</html>
