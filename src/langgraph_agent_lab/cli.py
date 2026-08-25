@@ -8,6 +8,8 @@ from typing import Annotated
 
 import typer
 import yaml
+from dotenv import load_dotenv
+from langchain_core.runnables import RunnableConfig
 
 from .graph import build_graph
 from .metrics import MetricsReport, metric_from_state, summarize_metrics, write_metrics
@@ -15,6 +17,8 @@ from .persistence import build_checkpointer
 from .report import write_report
 from .scenarios import load_scenarios
 from .state import initial_state
+
+load_dotenv()
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -32,9 +36,12 @@ def run_scenarios(
     metrics = []
     for scenario in scenarios:
         state = initial_state(scenario)
-        run_config = {"configurable": {"thread_id": state["thread_id"]}}
+        run_config = RunnableConfig(configurable={"thread_id": state["thread_id"]})
         final_state = graph.invoke(state, config=run_config)
-        metrics.append(metric_from_state(final_state, scenario.expected_route.value, scenario.requires_approval))
+        expected = scenario.expected_route.value
+        metrics.append(
+            metric_from_state(final_state, expected, scenario.requires_approval)
+        )
     report = summarize_metrics(metrics)
     write_metrics(report, output)
     if cfg.get("report_path"):
