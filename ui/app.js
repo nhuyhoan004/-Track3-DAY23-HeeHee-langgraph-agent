@@ -27,126 +27,38 @@ const GRAPH_NODES = [
 ];
 
 // -----------------------------------------------------------------------------
-// 2. Mock Scenarios Dataset
+// 2. Backend API Client
 // -----------------------------------------------------------------------------
-const MOCK_SCENARIOS = {
-  simple: {
-    id: "S01_simple",
-    route: "simple",
-    route_label: "SIMPLE ROUTE",
-    thread_id: "thread-S01_simple",
-    query: "Reset my password",
-    nodes_visited: 4,
-    latency_ms: 842,
-    retry_count: 0,
-    interrupt_count: 0,
-    node_sequence: ["intake", "classify", "answer", "finalize"],
-    events: [
-      { node: "intake", event_type: "completed", message: "query normalized: 'Reset my password'", latency_ms: 120, metadata: { cleaned_query: "Reset my password", tokens: 4 } },
-      { node: "classify", event_type: "completed", message: "route=simple reasoning='General how-to inquiry'", latency_ms: 280, metadata: { confidence: 0.98, route: "simple" } },
-      { node: "answer", event_type: "completed", message: "answer_length=174 chars synthesized", latency_ms: 410, metadata: { model: "gemini-flash", tokens: 48 } },
-      { node: "finalize", event_type: "completed", message: "workflow finished, checkpoint saved", latency_ms: 32, metadata: { checkpoint_id: "chk_092a", status: "success" } }
-    ],
-    final_answer: "To reset your password, go to the login page and click 'Forgot Password'. Enter your email address and check your inbox for a reset link. The link expires in 24 hours."
-  },
+const API_BASE = "";
 
-  tool: {
-    id: "S02_tool",
-    route: "tool",
-    route_label: "TOOL EXECUTION",
-    thread_id: "thread-S02_tool",
-    query: "Order status #12345",
-    nodes_visited: 6,
-    latency_ms: 1247,
-    retry_count: 0,
-    interrupt_count: 0,
-    node_sequence: ["intake", "classify", "tool", "evaluate", "answer", "finalize"],
-    events: [
-      { node: "intake", event_type: "completed", message: "query normalized: 'Order status #12345'", latency_ms: 115, metadata: { order_id_extracted: "12345" } },
-      { node: "classify", event_type: "completed", message: "route=tool reasoning='Order lookup required'", latency_ms: 295, metadata: { confidence: 0.96, required_tool: "order_lookup" } },
-      { node: "tool", event_type: "executed", message: "SUCCESS: order_id=12345 status=shipped eta=2024-12-25", latency_ms: 450, metadata: { carrier: "FedEx", tracking: "FX-992810" } },
-      { node: "evaluate", event_type: "completed", message: "evaluation_result=success (valid carrier payload)", latency_ms: 120, metadata: { score: 1.0, retry_needed: false } },
-      { node: "answer", event_type: "completed", message: "answer_length=118 chars synthesized", latency_ms: 235, metadata: { model: "gemini-flash" } },
-      { node: "finalize", event_type: "completed", message: "workflow finished, checkpoint saved", latency_ms: 32, metadata: { checkpoint_id: "chk_093b", status: "success" } }
-    ],
-    final_answer: "Order #12345 is currently shipped and expected to arrive by December 25, 2024. Tracking status: In Transit (ETA confirmed)."
-  },
-
-  missing_info: {
-    id: "S03_missing_info",
-    route: "missing_info",
-    route_label: "MISSING INFO",
-    thread_id: "thread-S03_missing_info",
-    query: "Fix it please",
-    nodes_visited: 4,
-    latency_ms: 623,
-    retry_count: 0,
-    interrupt_count: 0,
-    node_sequence: ["intake", "classify", "clarify", "finalize"],
-    events: [
-      { node: "intake", event_type: "completed", message: "query normalized: 'Fix it please'", latency_ms: 110, metadata: { token_count: 3 } },
-      { node: "classify", event_type: "completed", message: "route=missing_info reasoning='Vague query lacks context'", latency_ms: 270, metadata: { missing_slots: ["target_system", "error_description"] } },
-      { node: "clarify", event_type: "completed", message: "clarification_requested: generated targeted question", latency_ms: 210, metadata: { prompt_variant: "polite_investigation" } },
-      { node: "finalize", event_type: "completed", message: "workflow finished (awaiting user follow-up)", latency_ms: 33, metadata: { checkpoint_id: "chk_094c", status: "clarification_pending" } }
-    ],
-    pending_question: "I'd like to help! Could you clarify what specifically needs to be fixed? What system, account, or feature are you referring to?"
-  },
-
-  risky: {
-    id: "S04_risky",
-    route: "risky",
-    route_label: "RISKY (HITL APPROVAL)",
-    thread_id: "thread-S04_risky",
-    query: "Refund customer and email",
-    nodes_visited: 8,
-    latency_ms: 1891,
-    retry_count: 0,
-    interrupt_count: 1,
-    node_sequence_pre_approval: ["intake", "classify", "risky_action", "approval"],
-    node_sequence_post_approval: ["tool", "evaluate", "answer", "finalize"],
-    events_pre_approval: [
-      { node: "intake", event_type: "completed", message: "query normalized: 'Refund customer and email'", latency_ms: 125, metadata: { category: "billing" } },
-      { node: "classify", event_type: "completed", message: "route=risky risk_level=high (financial side-effect)", latency_ms: 310, metadata: { risk_score: 0.89, requires_hitl: true } },
-      { node: "risky_action", event_type: "prepared", message: "action_staged: Refund $149.00 & notify customer", latency_ms: 180, metadata: { amount: 149.00, currency: "USD", action: "refund_and_email" } },
-      { node: "approval", event_type: "interrupted", message: "PAUSED: Checkpoint waiting for human sign-off", latency_ms: 0, metadata: { gate: "HITL_FINANCIAL", timeout_sec: 300 } }
-    ],
-    events_post_approval: [
-      { node: "approval", event_type: "completed", message: "APPROVED by human reviewer (mock-reviewer)", latency_ms: 540, metadata: { reviewer: "admin@corp.io", decision: "approve" } },
-      { node: "tool", event_type: "executed", message: "SUCCESS: Refund $149.00 settled, email dispatched", latency_ms: 390, metadata: { transaction_id: "tx_992144", email_status: "queued" } },
-      { node: "evaluate", event_type: "completed", message: "evaluation_result=success (ledger reconciled)", latency_ms: 110, metadata: { verified: true } },
-      { node: "answer", event_type: "completed", message: "answer_length=142 chars synthesized", latency_ms: 210, metadata: { model: "gemini-flash" } },
-      { node: "finalize", event_type: "completed", message: "workflow finished, checkpoint committed", latency_ms: 26, metadata: { checkpoint_id: "chk_095d", status: "success" } }
-    ],
-    proposed_action: "PROPOSED ACTION: Refund customer $149.00 USD and send confirmation receipt. This has financial and external communication side effects.",
-    final_answer: "The refund of $149.00 has been processed successfully, and a confirmation receipt has been emailed to the customer. (Approved by Human Reviewer)."
-  },
-
-  error: {
-    id: "S05_error",
-    route: "error",
-    route_label: "ERROR (RETRY LOOP)",
-    thread_id: "thread-S05_error_retry",
-    query: "System timeout error",
-    nodes_visited: 9,
-    latency_ms: 3124,
-    retry_count: 2,
-    interrupt_count: 0,
-    node_sequence: ["intake", "classify", "retry", "tool", "evaluate", "retry", "tool", "evaluate", "answer", "finalize"],
-    events: [
-      { node: "intake", event_type: "completed", message: "query normalized: 'System timeout error'", latency_ms: 120, metadata: { type: "system_health" } },
-      { node: "classify", event_type: "completed", message: "route=error reasoning='Detected transient timeout event'", latency_ms: 300, metadata: { confidence: 0.94 } },
-      { node: "retry", event_type: "incremented", message: "attempt=1 backoff=200ms staged", latency_ms: 150, metadata: { attempt: 1, max: 3 } },
-      { node: "tool", event_type: "executed", message: "ERROR: Downstream service timeout on attempt 1 (504)", latency_ms: 950, metadata: { error_code: 504 } },
-      { node: "evaluate", event_type: "completed", message: "evaluation_result=needs_retry (transient failure)", latency_ms: 110, metadata: { recoverable: true } },
-      { node: "retry", event_type: "incremented", message: "attempt=2 backoff=400ms staged", latency_ms: 210, metadata: { attempt: 2, max: 3 } },
-      { node: "tool", event_type: "executed", message: "SUCCESS: Downstream recovered on attempt 2 (200 OK)", latency_ms: 820, metadata: { status_code: 200 } },
-      { node: "evaluate", event_type: "completed", message: "evaluation_result=success after self-healing", latency_ms: 130, metadata: { recoverable: true } },
-      { node: "answer", event_type: "completed", message: "answer_length=152 chars synthesized", latency_ms: 300, metadata: { model: "gemini-flash" } },
-      { node: "finalize", event_type: "completed", message: "workflow finished, retry log persisted", latency_ms: 34, metadata: { checkpoint_id: "chk_096e", status: "recovered" } }
-    ],
-    final_answer: "The transient timeout issue has been resolved after 2 automated retry attempts with exponential backoff. All system health metrics have stabilized."
-  }
+const ROUTE_LABELS = {
+  simple: "SIMPLE ROUTE",
+  tool: "TOOL EXECUTION",
+  missing_info: "MISSING INFO",
+  risky: "RISKY (HITL APPROVAL)",
+  error: "ERROR (RETRY LOOP)",
 };
+
+async function postJSON(path, body) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`Server error (${response.status}): ${detail}`);
+  }
+  return response.json();
+}
+
+function sendQueryToBackend(query, threadId) {
+  return postJSON("/api/chat", { query, thread_id: threadId });
+}
+
+function sendApprovalToBackend(threadId, decision) {
+  return postJSON("/api/chat/approval", { thread_id: threadId, decision });
+}
 
 // -----------------------------------------------------------------------------
 // 3. Application State & DOM References
@@ -257,9 +169,9 @@ function bindEvents() {
   dom.presetBtns.forEach(btn => {
     btn.addEventListener("click", () => {
       if (state.isBusy) return;
-      const scenarioKey = btn.getAttribute("data-scenario");
-      if (MOCK_SCENARIOS[scenarioKey]) {
-        executeScenario(MOCK_SCENARIOS[scenarioKey]);
+      const query = btn.getAttribute("data-query");
+      if (query) {
+        handleCustomQuery(query);
       }
     });
   });
@@ -312,217 +224,116 @@ function bindEvents() {
 }
 
 // -----------------------------------------------------------------------------
-// 6. Custom Query Matching & Heuristics
+// 6. Custom Query Submission
 // -----------------------------------------------------------------------------
 function handleCustomQuery(query) {
   dom.chatInput.value = "";
-  const lower = query.toLowerCase();
-
-  let matchedScenarioKey = "simple";
-  if (lower.includes("refund") || lower.includes("delete") || lower.includes("destroy") || lower.includes("credit card") || lower.includes("money") || lower.includes("wire")) {
-    matchedScenarioKey = "risky";
-  } else if (lower.includes("order") || lower.includes("track") || lower.includes("status") || lower.includes("shipping") || lower.includes("#") || lower.includes("item")) {
-    matchedScenarioKey = "tool";
-  } else if (lower.includes("error") || lower.includes("timeout") || lower.includes("500") || lower.includes("fail") || lower.includes("retry") || lower.includes("crash")) {
-    matchedScenarioKey = "error";
-  } else if (lower.length < 15 || lower.includes("fix") || lower.includes("help") || lower.includes("broken") || lower.includes("what")) {
-    matchedScenarioKey = "missing_info";
-  }
-
-  // Clone scenario and inject custom query
-  const scenario = JSON.parse(JSON.stringify(MOCK_SCENARIOS[matchedScenarioKey]));
-  scenario.query = query;
-  executeScenario(scenario);
+  executeQuery(query);
 }
 
 // -----------------------------------------------------------------------------
-// 7. Scenario Execution & Workflow Orchestration
+// 7. Live Query Execution & Workflow Orchestration
 // -----------------------------------------------------------------------------
-async function executeScenario(scenario) {
+async function executeQuery(query) {
   state.isBusy = true;
-  state.activeScenario = scenario;
-  state.activeRoute = scenario.route;
-  state.threadId = scenario.thread_id;
+  state.threadId = `thread-${Date.now().toString(36)}`;
 
-  // Update Header
-  dom.threadIdText.textContent = scenario.thread_id;
-  setSystemStatus("active", "Executing Graph...");
+  dom.threadIdText.textContent = state.threadId;
+  setSystemStatus("active", "Invoking LangGraph...");
   setSendDisabled(true);
 
-  // Append User Bubble
-  appendUserMessage(scenario.query);
-
-  // Reset Graph Trace View
+  appendUserMessage(query);
   resetGraphTraceVisuals();
 
-  // Handle Scenario (Risky HITL vs Automatic Stream)
-  if (scenario.route === "risky") {
-    await executeRiskyScenario(scenario);
+  let res;
+  try {
+    res = await sendQueryToBackend(query, state.threadId);
+  } catch (err) {
+    appendAgentMessage(`Connection error: ${err.message}`, "error");
+    setSystemStatus("idle", "Backend Unreachable");
+    setSendDisabled(false);
+    state.isBusy = false;
+    return;
+  }
+
+  updateRouteBadge(res.route, ROUTE_LABELS[res.route] || (res.route || "").toUpperCase());
+  await animateEvents(res.events, res.thread_id, res.route);
+
+  const waitingForApproval = res.route === "risky" && !res.final_answer && !res.pending_question;
+
+  if (waitingForApproval) {
+    setNodeState("approval", "risky-active");
+    setSystemStatus("awaiting", "Awaiting HITL Approval");
+    animateMetrics(pickMetrics(res));
+
+    const decision = await new Promise((resolve) => {
+      appendApprovalGateCard(res.proposed_action, resolve);
+    });
+
+    setSystemStatus("active", "Resuming Graph Execution...");
+    let resumed;
+    try {
+      resumed = await sendApprovalToBackend(res.thread_id, decision);
+    } catch (err) {
+      appendAgentMessage(`Connection error: ${err.message}`, "error");
+      setSystemStatus("idle", "Backend Unreachable");
+      setSendDisabled(false);
+      state.isBusy = false;
+      return;
+    }
+
+    const newEvents = resumed.events.slice(res.events.length);
+    await animateEvents(newEvents, resumed.thread_id, resumed.route);
+    markUnvisitedNodesSkipped(resumed.events.map(e => e.node));
+    animateMetrics(pickMetrics(resumed));
+    renderFinalMessage(resumed);
+    setSystemStatus("idle", decision === "approve" ? "Action Executed & Approved" : "Halted (Rejected)");
   } else {
-    await executeStandardScenario(scenario);
+    markUnvisitedNodesSkipped(res.events.map(e => e.node));
+    animateMetrics(pickMetrics(res));
+    renderFinalMessage(res);
+    setSystemStatus("idle", "Workflow Finished");
+  }
+
+  setSendDisabled(false);
+  state.isBusy = false;
+}
+
+function pickMetrics(res) {
+  return {
+    nodes_visited: res.nodes_visited,
+    latency_ms: res.latency_ms,
+    retry_count: res.retry_count,
+    interrupt_count: res.interrupt_count,
+  };
+}
+
+function renderFinalMessage(res) {
+  if (res.pending_question) {
+    appendClarificationMessage(res.pending_question, res.route);
+  } else if (res.retry_count > 0) {
+    appendErrorMessage(res.final_answer, res.retry_count, res.route);
+  } else {
+    appendAgentMessage(res.final_answer, res.route);
   }
 }
 
 /**
- * Standard Scenario Workflow (Simple, Tool, Missing Info, Error)
+ * Animate a run of backend-reported events onto the graph trace, in order.
  */
-async function executeStandardScenario(scenario) {
-  // Update Active Route Pill
-  updateRouteBadge(scenario.route, scenario.route_label);
-
-  // Sequentially animate the node sequence
-  const sequence = scenario.node_sequence;
-  for (let i = 0; i < sequence.length; i++) {
-    const nodeId = sequence[i];
-    const event = scenario.events.find(e => e.node === nodeId);
-
+async function animateEvents(events, threadId, route) {
+  for (const event of events) {
+    const nodeId = event.node;
     setNodeState(nodeId, "active");
     await sleep(getStepDelay(350));
 
-    // If we just passed classify, display the route branch badge in the trace
     if (nodeId === "classify") {
-      insertBranchBadge(scenario.route);
+      insertBranchBadge(route);
     }
 
-    if (event) {
-      recordEvent(event, scenario.thread_id);
-    }
-
+    recordEvent(event, threadId);
     setNodeState(nodeId, "completed");
   }
-
-  // Mark all unvisited nodes as skipped
-  markUnvisitedNodesSkipped(sequence);
-
-  // Animate final telemetry metrics
-  animateMetrics({
-    nodes_visited: scenario.nodes_visited,
-    latency_ms: scenario.latency_ms,
-    retry_count: scenario.retry_count,
-    interrupt_count: scenario.interrupt_count
-  });
-
-  // Render response in chat
-  if (scenario.route === "missing_info") {
-    appendClarificationMessage(scenario.pending_question, scenario.route);
-  } else if (scenario.route === "error") {
-    appendErrorMessage(scenario.final_answer, scenario.retry_count, scenario.route);
-  } else {
-    appendAgentMessage(scenario.final_answer, scenario.route);
-  }
-
-  setSystemStatus("idle", "Workflow Finished");
-  setSendDisabled(false);
-  state.isBusy = false;
-}
-
-/**
- * Risky Scenario Workflow (Human-in-the-Loop Approval Gate)
- */
-async function executeRiskyScenario(scenario) {
-  updateRouteBadge(scenario.route, scenario.route_label);
-
-  // 1. Pre-Approval Execution (intake -> classify -> risky_action -> approval)
-  const preSeq = scenario.node_sequence_pre_approval;
-  for (let i = 0; i < preSeq.length; i++) {
-    const nodeId = preSeq[i];
-    const event = scenario.events_pre_approval.find(e => e.node === nodeId);
-
-    if (nodeId === "approval") {
-      setNodeState(nodeId, "risky-active");
-    } else {
-      setNodeState(nodeId, "active");
-    }
-
-    await sleep(getStepDelay(380));
-
-    if (nodeId === "classify") {
-      insertBranchBadge("risky");
-    }
-
-    if (event) {
-      recordEvent(event, scenario.thread_id);
-    }
-
-    if (nodeId !== "approval") {
-      setNodeState(nodeId, "completed");
-    }
-  }
-
-  // 2. Pause and Render Approval Gate Card in Chat
-  setSystemStatus("awaiting", "Awaiting HITL Approval");
-  animateMetrics({
-    nodes_visited: 4,
-    latency_ms: 615,
-    retry_count: 0,
-    interrupt_count: 1
-  });
-
-  const approvalPromise = new Promise((resolve) => {
-    appendApprovalGateCard(scenario.proposed_action, (decision) => {
-      resolve(decision);
-    });
-  });
-
-  const userDecision = await approvalPromise;
-
-  // 3. Post-Approval Execution
-  if (userDecision === "approve") {
-    setSystemStatus("active", "Resuming Graph Execution...");
-    setNodeState("approval", "completed");
-
-    const postSeq = scenario.node_sequence_post_approval;
-    for (let i = 0; i < postSeq.length; i++) {
-      const nodeId = postSeq[i];
-      const event = scenario.events_post_approval.find(e => e.node === nodeId);
-
-      setNodeState(nodeId, "active");
-      await sleep(getStepDelay(350));
-
-      if (event) {
-        recordEvent(event, scenario.thread_id);
-      }
-
-      setNodeState(nodeId, "completed");
-    }
-
-    // Mark skipped nodes
-    const allVisited = [...preSeq, ...postSeq];
-    markUnvisitedNodesSkipped(allVisited);
-
-    // Final metrics
-    animateMetrics({
-      nodes_visited: scenario.nodes_visited,
-      latency_ms: scenario.latency_ms,
-      retry_count: scenario.retry_count,
-      interrupt_count: scenario.interrupt_count
-    });
-
-    appendAgentMessage(scenario.final_answer, scenario.route);
-    setSystemStatus("idle", "Action Executed & Approved");
-  } else {
-    // Rejected flow
-    setNodeState("approval", "completed");
-    setNodeState("dead_letter", "active");
-    await sleep(getStepDelay(300));
-    setNodeState("dead_letter", "completed");
-    setNodeState("finalize", "completed");
-    markUnvisitedNodesSkipped(["intake", "classify", "risky_action", "approval", "dead_letter", "finalize"]);
-
-    recordEvent({
-      node: "approval",
-      event_type: "rejected",
-      message: "REJECTED by human operator. Action aborted.",
-      latency_ms: 0,
-      metadata: { reviewer: "operator", decision: "rejected" }
-    }, scenario.thread_id);
-
-    appendAgentMessage("The staged risky action was rejected by the operator. The request has been safely halted and no changes were made.", "risky");
-    setSystemStatus("idle", "Halted (Rejected)");
-  }
-
-  setSendDisabled(false);
-  state.isBusy = false;
 }
 
 // -----------------------------------------------------------------------------

@@ -43,6 +43,8 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
 | events | append | Full audit trail of node executions |
 | route | overwrite | Only current route matters |
 | attempt | overwrite | Current retry count |
+| should_retry | overwrite | Scenario flag driving tool failure simulation |
+| tool_status | overwrite | Structured `ok`/`error` flag — evaluate gate reads this, not text |
 | evaluation_result | overwrite | Latest evaluate gate decision |
 | pending_question | overwrite | Latest clarification question |
 | proposed_action | overwrite | Latest risky action description |
@@ -53,13 +55,16 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
 """
 
     # Per-scenario table
-    summary += "| Scenario | Expected | Actual | Success | Nodes | Retries | Interrupts |\n"
-    summary += "|---|---|---|:---:|---:|---:|---:|\n"
+    summary += (
+        "| Scenario | Expected | Actual | Success | Nodes | Retries | Interrupts | Latency |\n"
+    )
+    summary += "|---|---|---|:---:|---:|---:|---:|---:|\n"
     for m in metrics.scenario_metrics:
         success_icon = "✅" if m.success else "❌"
         summary += (
             f"| {m.scenario_id} | {m.expected_route} | {m.actual_route or 'N/A'} "
-            f"| {success_icon} | {m.nodes_visited} | {m.retry_count} | {m.interrupt_count} |\n"
+            f"| {success_icon} | {m.nodes_visited} | {m.retry_count} | {m.interrupt_count} "
+            f"| {m.latency_ms} ms |\n"
         )
 
     summary += f"""
@@ -69,6 +74,7 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
 - Average nodes visited: {metrics.avg_nodes_visited:.1f}
 - Total retries: {metrics.total_retries}
 - Total HITL interrupts: {metrics.total_interrupts}
+- Checkpoint replay verified: {"yes" if metrics.resume_success else "no"}
 
 ## 5. Failure Analysis
 
@@ -90,11 +96,20 @@ If `LANGGRAPH_INTERRUPT=true`, a real human must approve; otherwise, mock approv
 
 ## 6. Persistence / Recovery Evidence
 
-- Checkpointer type: SQLite (`outputs/checkpoints.db`)
-- Each scenario run uses a unique `thread_id` (e.g., `thread-S01_simple`)
+- Checkpointer type: SQLite (`outputs/checkpoints.db`), WAL mode
+- Each scenario run uses a **unique** `thread_id` (`thread-<scenario_id>-<run_uuid>`)
 - State is saved after each node execution
-- `get_state_history()` can replay any previous checkpoint
-- See `scripts/time_travel_demo.py` for time-travel demonstration
+- `resume_success = {metrics.resume_success}` — set by `cli._check_resume()`, which after the
+  batch replays the last thread via `get_state_history()` and re-reads the persisted state
+  with `get_state()`. It is `true` only when the history holds more than one checkpoint **and**
+  the restored state still carries the final answer.
+- See `scripts/time_travel_demo.py` for the standalone time-travel demonstration
+
+> **Why `thread_id` must be unique per run**: `events`, `errors`, `messages` and `tool_results`
+> use the append-only `add` reducer. Re-invoking a stable `thread_id` against the persistent
+> SQLite checkpointer replays the previous run's channel values, so every count in this report
+> would compound with each run (an earlier version of this lab reported ~3x inflated
+> `nodes_visited` and duplicate "Attempt 1 / Attempt 2" error entries for exactly this reason).
 
 ## 7. Extension Work
 
@@ -109,8 +124,9 @@ If `LANGGRAPH_INTERRUPT=true`, a real human must approve; otherwise, mock approv
 If given one more day:
 1. **Real tool integration**: Replace mock tool with actual order management API calls
 2. **Streaming responses**: Use `graph.stream()` for real-time token streaming in answer_node
-3. **LLM-as-judge evaluate_node**: Use GPT to evaluate tool result quality, not just "ERROR"
-   heuristic
+3. **LLM-as-judge evaluate_node**: Use the LLM to score tool result *quality*. The gate today
+   reads the structured `tool_status` flag, which is reliable for hard failures but says nothing
+   about whether the payload actually answers the user's question
 4. **Retry with exponential backoff**: Add sleep between retries to avoid rate limits
 5. **Postgres checkpointer**: Production-grade persistence with concurrent access support
 """

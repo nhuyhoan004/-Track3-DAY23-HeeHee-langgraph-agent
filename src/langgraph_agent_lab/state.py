@@ -5,6 +5,7 @@ Students should extend the schema only when needed. Keep state lean and serializ
 
 from __future__ import annotations
 
+import uuid
 from enum import StrEnum
 from operator import add
 from typing import Annotated, Any, TypedDict
@@ -52,8 +53,10 @@ class AgentState(TypedDict, total=False):
     risk_level: str
     attempt: int
     max_attempts: int
+    should_retry: bool  # From the scenario: simulate a transient tool failure
     final_answer: str | None
     # Overwrite semantics (no reducer) — only the latest value matters for these fields.
+    tool_status: str | None  # Set by tool_node: "ok" | "error" — structured, never parsed from text
     evaluation_result: str | None  # Set by evaluate_node: "success" | "needs_retry"
     pending_question: str | None  # Set by ask_clarification_node: the clarification question text
     proposed_action: str | None  # Set by risky_action_node: description of the risky action
@@ -81,17 +84,26 @@ class Scenario(BaseModel):
         return value
 
 
-def initial_state(scenario: Scenario) -> AgentState:
-    """Create a serializable initial state for one scenario."""
+def initial_state(scenario: Scenario, run_id: str | None = None) -> AgentState:
+    """Create a serializable initial state for one scenario.
+
+    The ``thread_id`` is unique per run. Reusing a stable id against a persistent
+    checkpointer (SQLite) would replay the previous run's channel values, and the
+    append-only fields below (`events`, `errors`, ...) would accumulate across runs,
+    inflating every count in the metrics report.
+    """
+    suffix = run_id or uuid.uuid4().hex[:8]
     return {
-        "thread_id": f"thread-{scenario.id}",
+        "thread_id": f"thread-{scenario.id}-{suffix}",
         "scenario_id": scenario.id,
         "query": scenario.query,
         "route": "",
         "risk_level": "unknown",
         "attempt": 0,
         "max_attempts": scenario.max_attempts,
+        "should_retry": scenario.should_retry,
         "final_answer": None,
+        "tool_status": None,
         "evaluation_result": None,
         "pending_question": None,
         "proposed_action": None,
