@@ -35,7 +35,10 @@ class MetricsReport(BaseModel):
 
 
 def metric_from_state(
-    state: dict[str, Any], expected_route: str, approval_required: bool
+    state: dict[str, Any],
+    expected_route: str,
+    approval_required: bool,
+    latency_ms: int = 0,
 ) -> ScenarioMetric:
     events = state.get("events", []) or []
     errors = state.get("errors", []) or []
@@ -58,11 +61,33 @@ def metric_from_state(
         interrupt_count=interrupt_count,
         approval_required=approval_required,
         approval_observed=approval is not None,
+        latency_ms=latency_ms,
         errors=list(errors),
     )
 
 
-def summarize_metrics(items: list[ScenarioMetric]) -> MetricsReport:
+def failed_metric(
+    scenario_id: str,
+    expected_route: str,
+    approval_required: bool,
+    error: str,
+    latency_ms: int = 0,
+) -> ScenarioMetric:
+    """Build a metric for a scenario whose run raised before producing a final state."""
+    return ScenarioMetric(
+        scenario_id=scenario_id,
+        success=False,
+        expected_route=expected_route,
+        actual_route=None,
+        approval_required=approval_required,
+        latency_ms=latency_ms,
+        errors=[error],
+    )
+
+
+def summarize_metrics(
+    items: list[ScenarioMetric], resume_success: bool = False
+) -> MetricsReport:
     if not items:
         raise ValueError("No scenario metrics to summarize")
     return MetricsReport(
@@ -71,7 +96,7 @@ def summarize_metrics(items: list[ScenarioMetric]) -> MetricsReport:
         avg_nodes_visited=mean(item.nodes_visited for item in items),
         total_retries=sum(item.retry_count for item in items),
         total_interrupts=sum(item.interrupt_count for item in items),
-        resume_success=False,
+        resume_success=resume_success,
         scenario_metrics=items,
     )
 

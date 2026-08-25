@@ -21,6 +21,26 @@ from .llm import get_llm
 from .state import AgentState, ApprovalDecision, make_event
 
 
+def _as_text(content: object) -> str:
+    """Coerce a LangChain message content into plain text.
+
+    Anthropic and Gemini return a list of content blocks rather than a string, which would
+    otherwise leak a non-serializable list into `final_answer`.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and "text" in block:
+                parts.append(str(block["text"]))
+        if parts:
+            return "".join(parts)
+    return str(content)
+
+
 # ─── EXAMPLE: working node (provided for reference) ──────────────────
 def intake_node(state: AgentState) -> dict:
     """Normalize raw query. This node is provided as a working example."""
@@ -78,32 +98,54 @@ def classify_node(state: AgentState) -> dict:
 
 
 def tool_node(state: AgentState) -> dict:
-    """Execute a mock tool call, simulating transient failures for error-route scenarios."""
+    """Execute a mock tool call, simulating transient failures for retry scenarios.
+
+    Failure is driven by the scenario's `should_retry` flag (or the `error` route), and the
+    failure budget is derived from `max_attempts` so the final allowed attempt always
+    succeeds. This keeps the retry loop bounded for any `max_attempts` value instead of
+    relying on a hard-coded threshold.
+    """
     attempt = state.get("attempt", 0)
     route = state.get("route", "")
     query = state.get("query", "")
+    max_attempts = state.get("max_attempts", 3)
 
-    if route == "error" and attempt < 2:
-        result = f"ERROR: Tool timeout on attempt {attempt} for query: {query[:40]}"
+    simulate_failure = bool(state.get("should_retry")) or route == "error"
+    failure_budget = max(1, max_attempts - 1)
+
+    if simulate_failure and attempt < failure_budget:
+        status = "error"
+        result = f"Tool timeout on attempt {attempt} for query: {query[:40]}"
     else:
+        status = "ok"
         result = (
-            f"SUCCESS: Tool executed on attempt {attempt}. "
+            f"Tool executed on attempt {attempt}. "
             f"Mock data retrieved for: {query[:50]}. "
             f"[order_id=12345, status=shipped, eta=2024-12-25]"
         )
 
     return {
-        "tool_results": [result],
-        "events": [make_event("tool", "executed", result[:80])],
+        "tool_status": status,
+        "tool_results": [f"[{status}] {result}"],
+        "events": [make_event("tool", "executed", result[:80], tool_status=status)],
     }
 
 
 def evaluate_node(state: AgentState) -> dict:
-    """Evaluate tool results — the retry-loop gate (heuristic on latest tool result)."""
-    tool_results = state.get("tool_results") or []
-    latest = tool_results[-1] if tool_results else ""
+    """Evaluate the tool result — the retry-loop gate.
 
-    evaluation_result = "needs_retry" if "ERROR" in latest else "success"
+    Reads the structured `tool_status` flag rather than substring-matching the result text.
+    The result text embeds the user's query, so a query containing the word "ERROR" would
+    otherwise be misread as a tool failure and burn the whole retry budget.
+    """
+    status = state.get("tool_status")
+    if status is None:
+        # Fallback for states reconstructed without tool_status (e.g. replayed checkpoints).
+        tool_results = state.get("tool_results") or []
+        latest = tool_results[-1] if tool_results else ""
+        status = "error" if latest.startswith("[error]") else "ok"
+
+    evaluation_result = "needs_retry" if status == "error" else "success"
 
     return {
         "evaluation_result": evaluation_result,
@@ -135,10 +177,11 @@ def answer_node(state: AgentState) -> dict:
     )
 
     response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=context)])
+    answer = _as_text(response.content)
 
     return {
-        "final_answer": response.content,
-        "events": [make_event("answer", "completed", f"answer_length={len(response.content)}")],
+        "final_answer": answer,
+        "events": [make_event("answer", "completed", f"answer_length={len(answer)}")],
     }
 
 
