@@ -1,25 +1,10 @@
-"""Report generation helper."""
-
-from __future__ import annotations
-
-from datetime import datetime
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a complete lab report from metrics data."""
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    # --- Summary table ---
-    summary = f"""# Day 08 Lab Report
+# Day 08 Lab Report
 
 ## 1. Team / Student
 
 - **Name**: Nguyen Tuan Duc
 - **Student ID**: 2A202601380
-- **Date**: {now}
+- **Date**: 2026-08-25 16:23
 
 ## 2. Architecture
 
@@ -50,25 +35,22 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
 
 ## 4. Scenario Results
 
-"""
+| Scenario | Expected | Actual | Success | Nodes | Retries | Interrupts |
+|---|---|---|:---:|---:|---:|---:|
+| S01_simple | simple | simple | ✅ | 8 | 0 | 0 |
+| S02_tool | tool | tool | ✅ | 12 | 0 | 0 |
+| S03_missing | missing_info | missing_info | ✅ | 12 | 0 | 0 |
+| S04_risky | risky | risky | ✅ | 24 | 0 | 3 |
+| S05_error | error | error | ✅ | 30 | 6 | 0 |
+| S06_delete | risky | risky | ✅ | 24 | 0 | 3 |
+| S07_dead_letter | error | error | ✅ | 15 | 3 | 0 |
 
-    # Per-scenario table
-    summary += "| Scenario | Expected | Actual | Success | Nodes | Retries | Interrupts |\n"
-    summary += "|---|---|---|:---:|---:|---:|---:|\n"
-    for m in metrics.scenario_metrics:
-        success_icon = "✅" if m.success else "❌"
-        summary += (
-            f"| {m.scenario_id} | {m.expected_route} | {m.actual_route or 'N/A'} "
-            f"| {success_icon} | {m.nodes_visited} | {m.retry_count} | {m.interrupt_count} |\n"
-        )
-
-    summary += f"""
 **Summary**:
-- Total scenarios: {metrics.total_scenarios}
-- Success rate: {metrics.success_rate:.1%}
-- Average nodes visited: {metrics.avg_nodes_visited:.1f}
-- Total retries: {metrics.total_retries}
-- Total HITL interrupts: {metrics.total_interrupts}
+- Total scenarios: 7
+- Success rate: 100.0%
+- Average nodes visited: 17.9
+- Total retries: 9
+- Total HITL interrupts: 6
 
 ## 5. Failure Analysis
 
@@ -113,12 +95,3 @@ If given one more day:
    heuristic
 4. **Retry with exponential backoff**: Add sleep between retries to avoid rate limits
 5. **Postgres checkpointer**: Production-grade persistence with concurrent access support
-"""
-    return summary
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")

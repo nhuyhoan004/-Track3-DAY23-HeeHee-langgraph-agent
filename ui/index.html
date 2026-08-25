@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LangGraph Support-Ticket Agent — Real-time reasoning observatory, routing visualization, and Human-in-the-Loop approval console.">
+  <title>LangGraph Support-Ticket Agent — Reasoning Observatory</title>
+
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container" id="app">
+    <!-- TOP HEADER -->
+    <header class="app-header" role="banner">
+      <div class="header-brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg class="hex-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 21 7.5 21 16.5 12 22 3 16.5 3 7.5 12 2" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">LangGraph Agent</h1>
+          <span class="brand-subtitle">Support Orchestration Lab</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="thread-badge" id="threadBadge" title="Current SQLite checkpoint thread ID">
+          <span class="thread-icon">#</span>
+          <span class="thread-label" id="threadIdText">thread-idle</span>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <div class="status-indicator" id="statusIndicator" title="Agent Runtime Status">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText">System Ready</span>
+        </div>
+        <div class="version-tag">v1.0.0</div>
+        <!-- Mobile Drawer Toggles -->
+        <button class="mobile-toggle-btn" id="mobileTraceToggle" aria-label="Toggle Graph Trace Panel">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>Trace</span>
+        </button>
+        <button class="mobile-toggle-btn" id="mobileMetricsToggle" aria-label="Toggle Metrics Panel">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Metrics</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN 3-PANEL LAYOUT -->
+    <main class="main-layout" role="main">
+      <!-- LEFT PANEL: GRAPH TRACE (THE SIGNATURE ELEMENT) -->
+      <aside class="panel graph-panel" id="graphPanel" aria-label="Graph Execution Trace">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <span class="panel-indicator"></span>
+            <h2 class="panel-title">Graph Trace</h2>
+          </div>
+          <span class="node-count-badge" id="activeNodeCount">11 Nodes</span>
+        </div>
+
+        <div class="graph-scroll-container">
+          <p class="graph-description">Live state transition pipeline showing real-time routing decisions & node executions.</p>
+          
+          <div class="graph-trace-chain" id="graphTraceChain">
+            <!-- Dynamic 11 Nodes will be injected & updated here by app.js -->
+          </div>
+        </div>
+
+        <div class="graph-footer">
+          <div class="legend-item"><span class="legend-dot active"></span> Active</div>
+          <div class="legend-item"><span class="legend-dot completed"></span> Completed</div>
+          <div class="legend-item"><span class="legend-dot skipped"></span> Skipped</div>
+        </div>
+      </aside>
+
+      <!-- CENTER PANEL: CHAT & WORKFLOW INTERFACE -->
+      <section class="panel chat-panel" id="chatPanel" aria-label="Chat Interaction">
+        <div class="chat-header">
+          <div class="chat-title-group">
+            <h2 class="chat-title">Orchestration Console</h2>
+            <span class="chat-subtitle">Transparent LLM routing & execution observatory</span>
+          </div>
+          <button class="clear-chat-btn" id="clearChatBtn" aria-label="Clear chat history and reset state" title="Clear conversation">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <!-- Chat Stream -->
+        <div class="chat-stream" id="chatStream" role="log" aria-live="polite">
+          <!-- Initial Welcome Message -->
+          <div class="message-wrapper agent" id="welcomeMessage">
+            <div class="agent-avatar" aria-hidden="true">⬡</div>
+            <div class="message-bubble agent-bubble welcome-bubble">
+              <div class="bubble-header">
+                <span class="sender-name">LangGraph Agent</span>
+                <span class="bubble-timestamp">System Init</span>
+              </div>
+              <div class="bubble-content">
+                <p>Welcome to the <strong>LangGraph Support-Ticket Observatory</strong>. This interface visualizes conditional node routing, tool calls, retry self-healing, and Human-in-the-Loop (HITL) safety gates in real-time.</p>
+                <p class="welcome-tip">Select a preset scenario below or type a custom ticket inquiry to observe the graph trace execution.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preset Quick Triggers -->
+        <div class="preset-section">
+          <span class="preset-label">Test Scenarios:</span>
+          <div class="preset-buttons" role="group" aria-label="Preset Test Scenarios">
+            <button class="preset-btn" data-scenario="simple" aria-label="Run simple password reset scenario">
+              <span class="preset-dot simple"></span>
+              <span class="preset-text">Reset my password</span>
+              <span class="preset-route-tag">simple</span>
+            </button>
+            <button class="preset-btn" data-scenario="tool" aria-label="Run order status lookup tool scenario">
+              <span class="preset-dot tool"></span>
+              <span class="preset-text">Order status #12345</span>
+              <span class="preset-route-tag">tool</span>
+            </button>
+            <button class="preset-btn" data-scenario="missing_info" aria-label="Run vague query missing info scenario">
+              <span class="preset-dot missing_info"></span>
+              <span class="preset-text">Fix it please</span>
+              <span class="preset-route-tag">missing_info</span>
+            </button>
+            <button class="preset-btn" data-scenario="risky" aria-label="Run risky financial refund scenario with HITL approval">
+              <span class="preset-dot risky"></span>
+              <span class="preset-text">Refund customer & email</span>
+              <span class="preset-route-tag">risky [HITL]</span>
+            </button>
+            <button class="preset-btn" data-scenario="error" aria-label="Run timeout retry recovery scenario">
+              <span class="preset-dot error"></span>
+              <span class="preset-text">System timeout error</span>
+              <span class="preset-route-tag">error (retry)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Form -->
+        <form class="chat-input-form" id="chatForm">
+          <div class="input-container">
+            <label for="chatInput" class="visually-hidden">Type support ticket query</label>
+            <input 
+              type="text" 
+              id="chatInput" 
+              class="chat-input" 
+              placeholder="Ask a question or describe a support issue..." 
+              autocomplete="off"
+              aria-label="Support ticket inquiry input"
+            />
+            <div class="input-hint" aria-hidden="true">
+              <span class="kbd-badge">↵ Enter</span>
+              <span class="kbd-badge">Esc clear</span>
+            </div>
+            <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- RIGHT PANEL: METRICS & AUDIT LOG -->
+      <aside class="panel metrics-panel" id="metricsPanel" aria-label="Metrics and Event Log">
+        <!-- Active Route Badge -->
+        <div class="metrics-section">
+          <div class="section-label">Active Route Classification</div>
+          <div class="route-badge-container">
+            <div class="route-badge idle" id="activeRouteBadge">
+              <span class="route-pulse-dot"></span>
+              <span class="route-name" id="activeRouteName">IDLE / STANDBY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2x2 Metric Counters Grid -->
+        <div class="metrics-section">
+          <div class="section-label">Telemetry & Performance</div>
+          <div class="metrics-grid">
+            <!-- Metric 1: Nodes Visited -->
+            <div class="metric-card" id="cardNodes">
+              <div class="metric-header">
+                <span class="metric-title">Nodes Visited</span>
+                <span class="metric-unit">nodes</span>
+              </div>
+              <div class="metric-value-wrap">
+                <span class="metric-value" id="valNodesVisited">0</span>
+              </div>
+              <div class="metric-footer">Pipeline depth</div>
+            </div>
+
+            <!-- Metric 2: Latency -->
+            <div class="metric-card" id="cardLatency">
+              <div class="metric-header">
+                <span class="metric-title">Latency</span>
+                <span class="metric-unit">ms</span>
+              </div>
+              <div class="metric-value-wrap">
+                <span class="metric-value" id="valLatency">0</span>
+              </div>
+              <div class="metric-footer">End-to-end execution</div>
+            </div>
+
+            <!-- Metric 3: Retries -->
+            <div class="metric-card" id="cardRetries">
+              <div class="metric-header">
+                <span class="metric-title">Retries</span>
+                <span class="metric-unit">×</span>
+              </div>
+              <div class="metric-value-wrap">
+                <span class="metric-value" id="valRetries">0</span>
+              </div>
+              <div class="metric-footer">Self-healing loops</div>
+            </div>
+
+            <!-- Metric 4: Interrupts (HITL) -->
+            <div class="metric-card" id="cardInterrupts">
+              <div class="metric-header">
+                <span class="metric-title">Interrupts</span>
+                <span class="metric-unit">HITL</span>
+              </div>
+              <div class="metric-value-wrap">
+                <span class="metric-value" id="valInterrupts">0</span>
+              </div>
+              <div class="metric-footer">Human checkpoints</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Log Section -->
+        <div class="metrics-section event-log-section">
+          <div class="event-log-header">
+            <div class="section-label">Execution Audit Log</div>
+            <span class="event-count-badge" id="eventCountBadge">0 events</span>
+          </div>
+          <div class="event-log-container" id="eventLogContainer" role="log" aria-live="polite">
+            <div class="event-log-empty" id="eventLogEmpty">
+              <span>No events recorded yet. Run a scenario to inspect execution events.</span>
+            </div>
+            <!-- Event entries injected by app.js -->
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- NODE DETAILS INSPECTION POPOVER / MODAL -->
+    <div class="inspector-overlay" id="inspectorOverlay" aria-hidden="true">
+      <div class="inspector-card" id="inspectorCard" role="dialog" aria-modal="true" aria-labelledby="inspectorTitle">
+        <div class="inspector-header">
+          <div class="inspector-title-wrap">
+            <span class="inspector-badge" id="inspectorNodeTag">[node]</span>
+            <h3 class="inspector-title" id="inspectorTitle">Node Event Payload</h3>
+          </div>
+          <button class="inspector-close-btn" id="inspectorCloseBtn" aria-label="Close Inspector">✕</button>
+        </div>
+        <div class="inspector-body">
+          <div class="inspector-row">
+            <span class="inspector-meta-label">Event Type:</span>
+            <span class="inspector-meta-val" id="inspectorEventType">-</span>
+          </div>
+          <div class="inspector-row">
+            <span class="inspector-meta-label">Node Status:</span>
+            <span class="inspector-meta-val" id="inspectorNodeStatus">-</span>
+          </div>
+          <div class="inspector-row">
+            <span class="inspector-meta-label">Summary Message:</span>
+            <span class="inspector-meta-val highlight" id="inspectorMessage">-</span>
+          </div>
+          <div class="inspector-payload-wrap">
+            <span class="inspector-meta-label">State & Event Payload (JSON):</span>
+            <pre class="inspector-json"><code id="inspectorJsonCode">{}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

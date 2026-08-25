@@ -1,10 +1,20 @@
+﻿# Phase 6 — report.py: Implement render_report()
+
+## File to modify
+`src/langgraph_agent_lab/report.py`
+
+## What to do
+Implement `render_report(metrics: MetricsReport) -> str` which generates a complete Markdown report.
+The function is called automatically by `cli.py` after `make run-scenarios`.
+
+## Implementation
+
+```python
 """Report generation helper."""
 
 from __future__ import annotations
-
-from datetime import datetime
 from pathlib import Path
-
+from datetime import datetime
 from .metrics import MetricsReport
 
 
@@ -28,7 +38,7 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
 **Flow**: START → intake → classify → [conditional route] → ... → finalize → END
 
 **Key design decisions**:
-- `classify_node` uses an LLM with `.with_structured_output()` to classify intent into 5 routes
+- `classify_node` uses OpenAI GPT with `.with_structured_output()` to classify intent into 5 routes
 - `evaluate_node` acts as a retry-loop gate checking tool result quality
 - All paths must pass through `finalize_node` before END for auditability
 - Bounded retry: `max_attempts` prevents infinite loops
@@ -57,10 +67,7 @@ The system implements a LangGraph StateGraph for support-ticket routing with 11 
     summary += "|---|---|---|:---:|---:|---:|---:|\n"
     for m in metrics.scenario_metrics:
         success_icon = "✅" if m.success else "❌"
-        summary += (
-            f"| {m.scenario_id} | {m.expected_route} | {m.actual_route or 'N/A'} "
-            f"| {success_icon} | {m.nodes_visited} | {m.retry_count} | {m.interrupt_count} |\n"
-        )
+        summary += f"| {m.scenario_id} | {m.expected_route} | {m.actual_route or 'N/A'} | {success_icon} | {m.nodes_visited} | {m.retry_count} | {m.interrupt_count} |\n"
 
     summary += f"""
 **Summary**:
@@ -99,8 +106,7 @@ If `LANGGRAPH_INTERRUPT=true`, a real human must approve; otherwise, mock approv
 ## 7. Extension Work
 
 1. **SQLite persistence**: Implemented `SqliteSaver` with WAL mode in `persistence.py`
-2. **Mermaid diagram**: Generated via `graph.get_graph().draw_mermaid()` in
-   `scripts/generate_diagram.py`
+2. **Mermaid diagram**: Generated via `graph.get_graph().draw_mermaid()` in `scripts/generate_diagram.py`
 3. **Time travel**: `scripts/time_travel_demo.py` demonstrates `get_state_history()` replay
 4. **HITL interrupt**: `approval_node` supports `interrupt()` when `LANGGRAPH_INTERRUPT=true`
 
@@ -109,8 +115,7 @@ If `LANGGRAPH_INTERRUPT=true`, a real human must approve; otherwise, mock approv
 If given one more day:
 1. **Real tool integration**: Replace mock tool with actual order management API calls
 2. **Streaming responses**: Use `graph.stream()` for real-time token streaming in answer_node
-3. **LLM-as-judge evaluate_node**: Use GPT to evaluate tool result quality, not just "ERROR"
-   heuristic
+3. **LLM-as-judge evaluate_node**: Use GPT to evaluate tool result quality, not just "ERROR" heuristic
 4. **Retry with exponential backoff**: Add sleep between retries to avoid rate limits
 5. **Postgres checkpointer**: Production-grade persistence with concurrent access support
 """
@@ -122,3 +127,10 @@ def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(render_report(metrics), encoding="utf-8")
+```
+
+---
+
+## After implementing
+Run: `make run-scenarios`
+Verify: `reports/lab_report.md` is generated with all sections filled.
