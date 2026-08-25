@@ -64,7 +64,7 @@ data/grading/
 # ✅ outputs/metrics.json   — graded metrics output
 # ✅ outputs/graph_diagram.md — mermaid bonus
 # ✅ scripts/               — helper scripts (generate_diagram, time_travel)
-# ✅ AGENT_PLAN.md          — implementation plan
-# ✅ AGENT_PLAN/            — detailed phase specs
-# ✅ ui/                    — frontend chatbot UI
+AGENT_PLAN.md          — implementation plan
+AGENT_PLAN/            — detailed phase specs
+ui/                    — frontend chatbot UI
 # ✅ pyproject.toml, Makefile, README.md, Dockerfile — project config
