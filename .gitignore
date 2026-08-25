@@ -64,10 +64,8 @@ data/grading/
 # ✅ outputs/metrics.json   — graded metrics output
 # ✅ outputs/graph_diagram.md — mermaid bonus
 # ✅ scripts/               — helper scripts (generate_diagram, time_travel)
-
-# ─── Local working files (not part of the submission) ─────────────────────────
-# NOTE: gitignore does not strip trailing comments — a pattern must be the whole line.
+# ─── Local planning files ──────────────────────────────────────────────────────
 AGENT_PLAN.md
 AGENT_PLAN/
-ui/
-# ✅ pyproject.toml, Makefile, README.md, Dockerfile — project config
+
+# ✅ pyproject.toml, Makefile, README.md, Dockerfile, ui/ — project config & frontend
